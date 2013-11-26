@@ -266,8 +266,9 @@ private[kafka] class ZookeeperConsumerConnector(val config: ConsumerConfig,
       if (newOffset != checkpointedOffsets.get(TopicAndPartition(topic, info.partition))) {
         try {
           val path = topicDirs.consumerOffsetDir + "/" + info.partition
-          if (preventBackwardsCommit) {
-            //TODO
+          //If the path doesn't exist yet, unfortunately the api doesn't give us a way to check that we are the ones that create it
+          val exists = pathExists(zkClient, path)
+          if (preventBackwardsCommit && exists) {
             var needToUpdate = true
             while (needToUpdate) {
               val (originalValue, originalStat) = readData(zkClient, path)
