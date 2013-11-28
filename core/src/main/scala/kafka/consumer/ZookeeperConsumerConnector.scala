@@ -278,13 +278,16 @@ private[kafka] class ZookeeperConsumerConnector(val config: ConsumerConfig,
                 case _ => -1
               }
               if (originalOffset < newOffset) {
-                conditionalUpdatePersistentPath(zkClient, path, newOffset.toString, originalStat.getVersion)
+                val (success,_) = conditionalUpdatePersistentPath(zkClient, path, newOffset.toString, originalStat.getVersion)
+                if (success) {
+                  needToUpdate = false
+                }
               } else {
                 // we can just ignore this update completely (maybe this partition was reassigned somewhere else,
                 // and the other processor of the thread has gotten further)
+                println("ignore update w/ new offset " + newOffset + " before old offset " + originalOffset)
                 needToUpdate = false
               }
-
             }
           } else {
             updatePersistentPath(zkClient, path,
